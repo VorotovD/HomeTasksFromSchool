@@ -10,9 +10,10 @@ import java.time.Duration;
 import java.util.Scanner;
 
 public class Main {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args){
         CharSequence login;
         CharSequence password;
+        int countRefreshPage = 3;
 
         Scanner in = new Scanner(System.in);
         System.out.println("Input login for gosuslugi.ru");
@@ -20,16 +21,14 @@ public class Main {
         System.out.println("Input password for gosuslugi.ru");
         password = in.nextLine();
 
-
-        System.setProperty("webdriver.chrome.driver", "chromedriver.exe");
+        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriver.exe");
         WebDriver driver = new ChromeDriver();
-        driver.get("https://login.school.mosreg.ru/");
 
+        //TODO переделать xpath в переменные
+        driver.get("https://login.school.mosreg.ru/");
         driver.findElement(By.xpath("/html/body/div/div/div/div[5]/a")).click();
 
-        int countRefreshPage = 3;
-        Retries.retrie(driver,countRefreshPage);
-
+        Retries.repeat(driver,countRefreshPage);
 
         driver.findElement(By.xpath("//*[@id=\"login\"]")).sendKeys(login);
         driver.findElement(By.xpath("//*[@id=\"password\"]")).sendKeys(password);
@@ -50,7 +49,13 @@ public class Main {
 }
 
 class Retries {
-    public static void retrie(WebDriver driver, int countRefreshPage) {
+    /**Метод ожидает появления кликабельной кнопки "Войти" на сайте авторизации Госуслуги.
+     * При превышении времени ожидания страница авторизации обновляется.
+     * В случае превышения @param countRefreshPage страница закрывается.
+     * @param driver Управляющий драйвер
+     * @param countRefreshPage Максимальное количество обновлений страницы
+     */
+    public static void repeat(WebDriver driver, int countRefreshPage) {
         RuntimeException exception;
         int countRetries = 10;
         WebElement waitEsia;
@@ -70,7 +75,7 @@ class Retries {
 
         if (countRefreshPage != 0 && exception != null) {
             driver.navigate().refresh();
-            retrie(driver,--countRefreshPage);
+            repeat(driver,--countRefreshPage);
         } else if (exception != null ) {
             driver.quit();
             throw exception;
